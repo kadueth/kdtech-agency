@@ -38,9 +38,9 @@
     var saved = localStorage.getItem('kdtech-lang');
     if (saved === 'en') { window.location.replace('/en/'); return; }
     if (saved === 'pt') return;
-    fetch('https://ip-api.com/json/?fields=countryCode')
+    fetch('https://ipapi.co/json/')
       .then(function(r){ return r.json(); })
-      .then(function(d){ if (d.countryCode && d.countryCode !== 'BR') { localStorage.setItem('kdtech-lang','en'); window.location.replace('/en/'); } })
+      .then(function(d){ if (d.country_code && d.country_code !== 'BR') { localStorage.setItem('kdtech-lang','en'); window.location.replace('/en/'); } })
       .catch(function(){});
   })();
 </script>
