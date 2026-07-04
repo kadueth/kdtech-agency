@@ -684,18 +684,38 @@ footer {
   .hero-btns { justify-content: center; }
   .nav-links, .nav-cta { display: none; }
   .hamburger { display: flex; }
+  .navbar-inner { flex-wrap: wrap; }
   .navbar.open .nav-links {
-    display: flex; flex-direction: column;
-    position: absolute; top: 72px; left: 0; right: 0;
-    background: var(--primary);
-    padding: 20px; gap: 14px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    order: 3;
+    padding: 16px 0 12px;
+    gap: 4px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 12px;
+  }
+  .navbar.open .nav-links a {
+    padding: 10px 4px;
+    font-size: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
   }
   .navbar.open .nav-cta {
-    display: flex; flex-direction: column;
-    position: absolute; top: 72px; left: 0; right: 0;
-    background: var(--primary);
-    padding: 0 20px 20px; margin-top: 160px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    order: 4;
+    padding: 12px 0 20px;
     gap: 10px;
+    align-items: stretch;
+  }
+  .navbar.open .nav-cta .btn-lang {
+    justify-content: center;
+    font-size: 0.95rem;
+    padding: 10px;
+  }
+  .navbar.open .nav-cta .btn-whatsapp {
+    justify-content: center;
   }
   .plan-card.popular { transform: scale(1); }
   .stats-inner { grid-template-columns: repeat(2,1fr); }
