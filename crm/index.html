@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KDTech CRM – Gestão de Leads</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #0a2540; --accent: #00c2ff; --accent2: #7c3aed;
+      --white: #fff; --gray-light: #f4f7fb; --gray: #6b7280; --dark: #111827;
+      --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #3b82f6;
+      --shadow: 0 2px 16px rgba(10,37,64,0.10); --radius: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--gray-light); color: var(--dark); min-height: 100vh; }
+
+    /* LAYOUT */
+    .app { display: block; min-height: 100vh; }
+    .sidebar {
+      background: var(--primary); color: white;
+      padding: 0; position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+      display: flex; flex-direction: column; z-index: 100;
+      overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 24px 20px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .logo-mark { width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg,var(--accent),var(--accent2)); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1rem; }
+    .logo-text { font-weight: 800; font-size: 1.05rem; }
+    .logo-text span { color: var(--accent); }
+    .sidebar-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.35); padding: 20px 20px 8px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; font-size: 0.9rem; font-weight: 500;
+      color: rgba(255,255,255,0.7); cursor: pointer;
+      border-radius: 8px; margin: 0 8px 2px;
+      transition: all 0.2s;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.10); color: white; }
+    .nav-item.active { background: rgba(0,194,255,0.15); color: var(--accent); }
+    .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+    .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .sidebar-footer a { color: rgba(255,255,255,0.5); font-size: 0.82rem; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+    .sidebar-footer a:hover { color: white; }
+
+    /* MAIN */
+    .main { margin-left: 240px; padding: 28px; min-height: 100vh; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .topbar h1 { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 8px; font-weight: 600; font-size: 0.88rem;
+      cursor: pointer; border: none; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-primary { background: linear-gradient(135deg,var(--accent2),#5b21b6); color: white; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(124,58,237,0.35); }
+    .btn-outline { background: white; color: var(--primary); border: 1.5px solid #e5e9f0; }
+    .btn-outline:hover { border-color: var(--accent2); color: var(--accent2); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-sm { padding: 6px 12px; font-size: 0.82rem; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: white; border-radius: var(--radius); padding: 20px;
+      box-shadow: var(--shadow); display: flex; align-items: center; gap: 16px;
+    }
+    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+    .stat-info { flex: 1; }
+    .stat-num { font-size: 1.8rem; font-weight: 900; color: var(--primary); line-height: 1; }
+    .stat-lbl { font-size: 0.78rem; color: var(--gray); margin-top: 3px; }
+    .stat-delta { font-size: 0.75rem; font-weight: 700; margin-top: 4px; }
+    .delta-up { color: var(--success); }
+
+    /* FILTER BAR */
+    .filter-bar {
+      background: white; border-radius: var(--radius); padding: 16px 20px;
+      box-shadow: var(--shadow); margin-bottom: 20px;
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1; min-width: 200px; padding: 9px 14px;
+      border: 1.5px solid #e5e9f0; border-radius: 8px;
+      font-size: 0.9rem; outline: none; font-family: inherit;
+    }
+    .search-input:focus { border-color: var(--accent2); }
+    .filter-select {
+      padding: 9px 14px; border: 1.5px solid #e5e9f0; border-radius: 8px;
+      font-size: 0.88rem; color: var(--dark); font-family: inherit; outline: none; cursor: pointer;
+    }
+    .filter-select:focus { border-color: var(--accent2); }
+
+    /* TABLE */
+    .table-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .table-header { padding: 18px 20px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+    .table-header h3 { font-size: 1rem; font-weight: 700; color: var(--primary); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--gray-light); padding: 11px 16px;
+      text-align: left; font-size: 0.78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid #f0f2f5; transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--gray-light); }
+    tbody td { padding: 13px 16px; font-size: 0.9rem; }
+    .lead-name { font-weight: 700; color: var(--primary); }
+    .lead-company { font-size: 0.82rem; color: var(--gray); }
+
+    /* STATUS BADGES */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 700;
+    }
+    .badge-novo { background: rgba(59,130,246,0.1); color: #1d4ed8; }
+    .badge-contato { background: rgba(245,158,11,0.1); color: #b45309; }
+    .badge-proposta { background: rgba(124,58,237,0.1); color: #6d28d9; }
+    .badge-fechado { background: rgba(16,185,129,0.1); color: #065f46; }
+    .badge-perdido { background: rgba(239,68,68,0.1); color: #b91c1c; }
+
+    /* SOURCE BADGE */
+    .source-badge { font-size: 0.78rem; color: var(--gray); background: var(--gray-light); padding: 3px 8px; border-radius: 6px; }
+
+    /* ACTIONS */
+    .actions { display: flex; gap: 6px; }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(10,37,64,0.55); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 18px; padding: 36px;
+      width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(10,37,64,0.25);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-header h2 { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray); line-height: 1; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.83rem; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px 14px; border: 1.5px solid #e5e9f0; border-radius: 9px;
+      font-size: 0.92rem; font-family: inherit; outline: none; transition: all 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent2); }
+    .form-group textarea { resize: vertical; min-height: 90px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+    /* DETAIL PANEL */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .detail-item strong { display: block; font-size: 0.78rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+    .detail-item span { font-size: 0.92rem; color: var(--dark); }
+    .notes-box { background: var(--gray-light); border-radius: 10px; padding: 14px; font-size: 0.9rem; color: var(--dark); line-height: 1.6; min-height: 60px; }
+    .history-item { padding: 10px 0; border-bottom: 1px solid #f0f2f5; font-size: 0.88rem; }
+    .history-item:last-child { border-bottom: none; }
+    .history-date { color: var(--gray); font-size: 0.78rem; }
+
+    /* EMPTY STATE */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--gray); }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 14px; }
+    .empty-state h3 { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--primary); color: white; padding: 12px 24px;
+      border-radius: 99px; font-size: 0.88rem; font-weight: 600;
+      box-shadow: 0 8px 32px rgba(10,37,64,0.3); z-index: 9999;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: static; width: 100%; height: auto; }
+      .main { margin-left: 0; padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .form-row { grid-template-columns: 1fr; }
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../assets/img/logo-full-cropped.png" alt="KDTech" style="height:36px;filter:brightness(0) invert(1);object-fit:contain;" />
+      <span style="color:rgba(255,255,255,0.5);font-size:0.75rem;font-weight:700;letter-spacing:0.08em;margin-left:2px">CRM</span>
+    </div>
+    <div class="sidebar-label">Principal</div>
+    <div class="nav-item active" onclick="showView('leads')">
+      <span class="nav-icon">👥</span> Leads
+    </div>
+    <div class="nav-item" onclick="showView('clientes')">
+      <span class="nav-icon">🏢</span> Clientes
+    </div>
+    <div class="nav-item" onclick="showView('relatorios')">
+      <span class="nav-icon">📊</span> Relatórios
+    </div>
+    <div class="sidebar-label">Links Rápidos</div>
+    <div class="nav-item" onclick="window.open('../index.html')">
+      <span class="nav-icon">🇧🇷</span> Site Brasil
+    </div>
+    <div class="nav-item" onclick="window.open('../en/index.html')">
+      <span class="nav-icon">🇦🇺</span> Site Austrália
+    </div>
+    <div class="sidebar-footer">
+      <a href="../index.html">← Voltar ao site</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- VIEW: LEADS -->
+    <div id="view-leads">
+      <div class="topbar">
+        <div>
+          <h1>Gestão de Leads</h1>
+          <p style="color:var(--gray);font-size:0.88rem;margin-top:2px">Todos os contatos recebidos pelo formulário dos sites</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline" onclick="exportCSV()">⬇ Exportar CSV</button>
+          <button class="btn btn-primary" onclick="openNewLead()">+ Novo Lead</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <input class="search-input" type="text" id="searchInput" placeholder="🔍 Buscar por nome, empresa ou e-mail..." oninput="renderTable()" />
+        <select class="filter-select" id="filterStatus" onchange="renderTable()">
+          <option value="">Todos os status</option>
+          <option value="Novo">Novo</option>
+          <option value="Em Contato">Em Contato</option>
+          <option value="Proposta Enviada">Proposta Enviada</option>
+          <option value="Fechado">Fechado</option>
+          <option value="Perdido">Perdido</option>
+        </select>
+        <select class="filter-select" id="filterSource" onchange="renderTable()">
+          <option value="">Todas as origens</option>
+          <option value="Brasil">Site Brasil</option>
+          <option value="Austrália">Site Austrália</option>
+          <option value="Manual">Manual</option>
+        </select>
+        <select class="filter-select" id="filterService" onchange="renderTable()">
+          <option value="">Todos os serviços</option>
+          <option value="landing-page">Landing Page</option>
+          <option value="site-profissional">Site Profissional</option>
+          <option value="sistema-cadastro">Sistema de Cadastro</option>
+          <option value="loja-virtual">Loja Virtual</option>
+          <option value="manutencao">Manutenção</option>
+        </select>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Lista de Leads <span id="leadCount" style="color:var(--gray);font-weight:500"></span></h3>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome / Empresa</th>
+                <th>Contato</th>
+                <th>Serviço</th>
+                <th>Origem</th>
+                <th>Status</th>
+                <th>Data</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="leadsBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none">
+          <div class="empty-icon">📭</div>
+          <h3>Nenhum lead encontrado</h3>
+          <p>Ajuste os filtros ou adicione um novo lead manualmente.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: CLIENTES -->
+    <div id="view-clientes" style="display:none">
+      <div class="topbar">
+        <h1>Clientes Ativos</h1>
+        <button class="btn btn-primary" onclick="openNewClient()">+ Novo Cliente</button>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><h3>Clientes</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>Empresa</th><th>E-mail</th><th>Plano</th><th>Desde</th><th>Ações</th></tr></thead>
+            <tbody id="clientesBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyClients" class="empty-state" style="display:none">
+          <div class="empty-icon">🏢</div>
+          <h3>Nenhum cliente cadastrado ainda</h3>
+          <p>Converta leads em clientes para aparecerem aqui.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: RELATÓRIOS -->
+    <div id="view-relatorios" style="display:none">
+      <div class="topbar"><h1>Relatórios</h1></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="table-card" style="padding:24px">
+          <h3 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:16px">Leads por Status</h3>
+          <div id="reportStatus"></div>
+        </div>
+        <div class="table-card" style="padding:24px">
+          <h3 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:16px">Leads por Origem</h3>
+          <div id="reportSource"></div>
+        </div>
+        <div class="table-card" style="padding:24px">
+          <h3 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:16px">Leads por Serviço</h3>
+          <div id="reportService"></div>
+        </div>
+        <div class="table-card" style="padding:24px">
+          <h3 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:16px">Últimos 7 dias</h3>
+          <div id="reportRecent"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL: LEAD DETAIL / EDIT -->
+<div class="modal-overlay" id="leadModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Detalhes do Lead</h2>
+      <button class="modal-close" onclick="closeModal('leadModal')">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA LAYER =====
+const STORAGE_KEY = 'kdtech_crm_leads';
+const CLIENTS_KEY = 'kdtech_crm_clients';
+
+function getLeads() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+function saveLeads(leads) { localStorage.setItem(STORAGE_KEY, JSON.stringify(leads)); }
+function getClients() { return JSON.parse(localStorage.getItem(CLIENTS_KEY) || '[]'); }
+function saveClients(c) { localStorage.setItem(CLIENTS_KEY, JSON.stringify(c)); }
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// Seed demo data if empty
+function seedDemo() {
+  if (getLeads().length > 0) return;
+  const demo = [
+    { id: genId(), nome: 'Maria Cristina Oliveira', empresa: 'Boutique das Flores', email: 'maria@boutique.com.br', telefone: '(21) 98888-1234', servico: 'site-profissional', mensagem: 'Quero um site para minha floricultura.', status: 'Fechado', origem: 'Brasil', data: new Date(Date.now()-7*86400000).toISOString(), notas: 'Cliente fechou plano Profissional R$3.800. Entrega até dia 20.' },
+    { id: genId(), nome: 'Ricardo Pimentel', empresa: 'Construtora Pimentel', email: 'ricardo@pimentel.com.br', telefone: '(21) 97777-5678', servico: 'sistema-cadastro', mensagem: 'Preciso de sistema para cadastrar funcionários.', status: 'Proposta Enviada', origem: 'Brasil', data: new Date(Date.now()-3*86400000).toISOString(), notas: 'Proposta de R$7.500 enviada. Aguardando retorno.' },
+    { id: genId(), nome: 'Sarah Brennan', empresa: 'The Corner Café', email: 'sarah@cornercafe.com.au', telefone: '0412 345 678', servico: 'landing-page', mensagem: 'Need a simple website for my café in Sydney.', status: 'Fechado', origem: 'Austrália', data: new Date(Date.now()-5*86400000).toISOString(), notas: 'Closed Starter plan A$800. Delivered.' },
+    { id: genId(), nome: 'James Mitchell', empresa: 'Mitchell Allied Health', email: 'james@mitchellhealth.com.au', telefone: '0430 111 222', servico: 'sistema-cadastro', mensagem: 'We need a patient registration system.', status: 'Em Contato', origem: 'Austrália', data: new Date(Date.now()-1*86400000).toISOString(), notas: 'Scheduled call for Thursday.' },
+    { id: genId(), nome: 'Ana Souza', empresa: 'Clínica Vida Plena', email: 'ana@vidaplena.com.br', telefone: '(21) 96666-9012', servico: 'site-profissional', mensagem: 'Quero um site para minha clínica.', status: 'Novo', origem: 'Brasil', data: new Date().toISOString(), notas: '' },
+    { id: genId(), nome: 'Lisa Thompson', empresa: 'Thompson Real Estate', email: 'lisa@thompsonre.com.au', telefone: '0421 987 654', servico: 'site-profissional', mensagem: 'Looking for a professional real estate website.', status: 'Novo', origem: 'Austrália', data: new Date().toISOString(), notas: '' },
+  ];
+  saveLeads(demo);
+}
+
+// ===== VIEWS =====
+function showView(view) {
+  ['leads','clientes','relatorios'].forEach(v => {
+    document.getElementById('view-'+v).style.display = v === view ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach((el,i) => el.classList.toggle('active', i === ['leads','clientes','relatorios'].indexOf(view)));
+  if (view === 'leads') { renderStats(); renderTable(); }
+  if (view === 'clientes') renderClients();
+  if (view === 'relatorios') renderReports();
+}
+
+// ===== STATS =====
+function renderStats() {
+  const leads = getLeads();
+  const total = leads.length;
+  const novos = leads.filter(l => l.status === 'Novo').length;
+  const fechados = leads.filter(l => l.status === 'Fechado').length;
+  const brasil = leads.filter(l => l.origem === 'Brasil').length;
+  const australia = leads.filter(l => l.origem === 'Austrália').length;
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(59,130,246,0.12)">👥</div><div class="stat-info"><div class="stat-num">${total}</div><div class="stat-lbl">Total de Leads</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">🆕</div><div class="stat-info"><div class="stat-num">${novos}</div><div class="stat-lbl">Novos (sem contato)</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)">✅</div><div class="stat-info"><div class="stat-num">${fechados}</div><div class="stat-lbl">Fechados</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(124,58,237,0.12)">🌎</div><div class="stat-info"><div class="stat-num">🇧🇷${brasil} / 🇦🇺${australia}</div><div class="stat-lbl">Brasil / Austrália</div></div></div>
+  `;
+}
+
+// ===== TABLE =====
+const statusMap = {
+  'Novo': 'badge-novo', 'Em Contato': 'badge-contato',
+  'Proposta Enviada': 'badge-proposta', 'Fechado': 'badge-fechado', 'Perdido': 'badge-perdido'
+};
+const serviceLabels = {
+  'landing-page':'Landing Page','site-profissional':'Site Profissional',
+  'sistema-cadastro':'Sistema Cadastro','loja-virtual':'Loja Virtual','manutencao':'Manutenção','outro':'Outro'
+};
+
+function renderTable() {
+  const leads = getLeads();
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const st = document.getElementById('filterStatus').value;
+  const src = document.getElementById('filterSource').value;
+  const svc = document.getElementById('filterService').value;
+
+  const filtered = leads.filter(l => {
+    const match = !q || [l.nome,l.empresa,l.email,l.telefone].join(' ').toLowerCase().includes(q);
+    return match && (!st || l.status === st) && (!src || l.origem === src) && (!svc || l.servico === svc);
+  }).sort((a,b) => new Date(b.data) - new Date(a.data));
+
+  document.getElementById('leadCount').textContent = `(${filtered.length})`;
+  const tbody = document.getElementById('leadsBody');
+  const empty = document.getElementById('emptyState');
+
+  if (filtered.length === 0) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(l => `
+    <tr>
+      <td><div class="lead-name">${esc(l.nome)}</div><div class="lead-company">${esc(l.empresa||'—')}</div></td>
+      <td><div>${esc(l.email)}</div><div style="font-size:0.82rem;color:var(--gray)">${esc(l.telefone||'')}</div></td>
+      <td><span style="font-size:0.85rem">${serviceLabels[l.servico]||l.servico||'—'}</span></td>
+      <td><span class="source-badge">${l.origem==='Brasil'?'🇧🇷 Brasil':l.origem==='Austrália'?'🇦🇺 Austrália':'🖊 Manual'}</span></td>
+      <td><span class="badge ${statusMap[l.status]||'badge-novo'}">${l.status}</span></td>
+      <td style="font-size:0.83rem;color:var(--gray);white-space:nowrap">${fmtDate(l.data)}</td>
+      <td><div class="actions">
+        <button class="btn btn-outline btn-sm" onclick="viewLead('${l.id}')">Ver</button>
+        <button class="btn btn-outline btn-sm" onclick="editLead('${l.id}')">Editar</button>
+        <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);color:var(--danger);border:none" onclick="deleteLead('${l.id}')">✕</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+// ===== LEAD ACTIONS =====
+function viewLead(id) {
+  const l = getLeads().find(x => x.id === id);
+  if (!l) return;
+  document.getElementById('modalTitle').textContent = 'Detalhes do Lead';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item"><strong>Nome</strong><span>${esc(l.nome)}</span></div>
+      <div class="detail-item"><strong>Empresa</strong><span>${esc(l.empresa||'—')}</span></div>
+      <div class="detail-item"><strong>E-mail</strong><span>${esc(l.email)}</span></div>
+      <div class="detail-item"><strong>Telefone</strong><span>${esc(l.telefone||'—')}</span></div>
+      <div class="detail-item"><strong>Serviço</strong><span>${serviceLabels[l.servico]||l.servico||'—'}</span></div>
+      <div class="detail-item"><strong>Origem</strong><span>${l.origem}</span></div>
+      <div class="detail-item"><strong>Status</strong><span class="badge ${statusMap[l.status]}">${l.status}</span></div>
+      <div class="detail-item"><strong>Data</strong><span>${fmtDate(l.data)}</span></div>
+    </div>
+    ${l.mensagem ? `<div style="margin-bottom:16px"><strong style="font-size:0.78rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.06em">Mensagem</strong><div class="notes-box" style="margin-top:6px">${esc(l.mensagem)}</div></div>` : ''}
+    <div><strong style="font-size:0.78rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.06em">Notas internas</strong><div class="notes-box" style="margin-top:6px">${esc(l.notas||'Sem notas.')}</div></div>
+    <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="editLead('${l.id}');closeModal('leadModal')">✏ Editar</button>
+      <a href="https://wa.me/${l.origem==='Austrália'?'61':'55'}${(l.telefone||'').replace(/\D/g,'')}" target="_blank" class="btn btn-outline" style="background:#25D366;color:white;border:none">💬 WhatsApp</a>
+      <a href="mailto:${l.email}" class="btn btn-outline">📧 E-mail</a>
+      ${l.status!=='Fechado'?`<button class="btn btn-outline" onclick="convertToClient('${l.id}')">✅ Converter em Cliente</button>`:''}
+    </div>
+  `;
+  openModal('leadModal');
+}
+
+function editLead(id) {
+  const l = id ? getLeads().find(x => x.id === id) : null;
+  const isNew = !l;
+  document.getElementById('modalTitle').textContent = isNew ? 'Novo Lead' : 'Editar Lead';
+  document.getElementById('modalBody').innerHTML = `
+    <form id="leadEditForm">
+      <div class="form-row">
+        <div class="form-group"><label>Nome *</label><input name="nome" value="${esc(l?.nome||'')}" required /></div>
+        <div class="form-group"><label>Empresa</label><input name="empresa" value="${esc(l?.empresa||'')}" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>E-mail *</label><input type="email" name="email" value="${esc(l?.email||'')}" required /></div>
+        <div class="form-group"><label>Telefone</label><input name="telefone" value="${esc(l?.telefone||'')}" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Serviço</label>
+          <select name="servico">
+            ${['landing-page','site-profissional','sistema-cadastro','loja-virtual','manutencao','outro'].map(v=>`<option value="${v}"${l?.servico===v?' selected':''}>${serviceLabels[v]}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Origem</label>
+          <select name="origem">
+            ${['Brasil','Austrália','Manual'].map(v=>`<option value="${v}"${(l?.origem||'Manual')===v?' selected':''}>${v}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Status</label>
+        <select name="status">
+          ${['Novo','Em Contato','Proposta Enviada','Fechado','Perdido'].map(v=>`<option value="${v}"${(l?.status||'Novo')===v?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Notas internas</label><textarea name="notas">${esc(l?.notas||'')}</textarea></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('leadModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">${isNew ? 'Criar Lead' : 'Salvar'}</button>
+      </div>
+    </form>
+  `;
+  document.getElementById('leadEditForm').onsubmit = function(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this).entries());
+    const leads = getLeads();
+    if (isNew) { leads.push({ id: genId(), ...data, data: new Date().toISOString(), mensagem: '' }); toast('Lead criado com sucesso!'); }
+    else { const idx = leads.findIndex(x => x.id === id); leads[idx] = { ...leads[idx], ...data }; toast('Lead atualizado!'); }
+    saveLeads(leads); closeModal('leadModal'); renderStats(); renderTable();
+  };
+  openModal('leadModal');
+}
+
+function openNewLead() { editLead(null); }
+
+function deleteLead(id) {
+  if (!confirm('Remover este lead?')) return;
+  saveLeads(getLeads().filter(l => l.id !== id));
+  renderStats(); renderTable(); toast('Lead removido.');
+}
+
+function convertToClient(id) {
+  const leads = getLeads();
+  const l = leads.find(x => x.id === id);
+  if (!l) return;
+  const idx = leads.findIndex(x => x.id === id);
+  leads[idx].status = 'Fechado';
+  saveLeads(leads);
+  const clients = getClients();
+  clients.push({ id: genId(), nome: l.nome, empresa: l.empresa, email: l.email, telefone: l.telefone, plano: serviceLabels[l.servico]||l.servico, desde: new Date().toISOString() });
+  saveClients(clients);
+  closeModal('leadModal'); renderStats(); renderTable();
+  toast('Lead convertido em cliente!');
+}
+
+// ===== CLIENTS =====
+function renderClients() {
+  const clients = getClients();
+  const tbody = document.getElementById('clientesBody');
+  const empty = document.getElementById('emptyClients');
+  if (clients.length === 0) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = clients.map(c => `
+    <tr>
+      <td class="lead-name">${esc(c.nome)}</td>
+      <td>${esc(c.empresa||'—')}</td>
+      <td>${esc(c.email)}</td>
+      <td><span class="badge badge-fechado">${esc(c.plano||'—')}</span></td>
+      <td style="font-size:0.83rem;color:var(--gray)">${fmtDate(c.desde)}</td>
+      <td><div class="actions">
+        <a href="mailto:${c.email}" class="btn btn-outline btn-sm">📧</a>
+        <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);color:var(--danger);border:none" onclick="deleteClient('${c.id}')">✕</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function deleteClient(id) {
+  if (!confirm('Remover este cliente?')) return;
+  saveClients(getClients().filter(c => c.id !== id));
+  renderClients(); toast('Cliente removido.');
+}
+
+// ===== REPORTS =====
+function renderReports() {
+  const leads = getLeads();
+  const by = (key, vals) => vals.map(v => {
+    const n = leads.filter(l => l[key] === v).length;
+    const pct = leads.length ? Math.round(n/leads.length*100) : 0;
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:0.88rem;margin-bottom:4px"><span>${v}</span><strong>${n}</strong></div>
+      <div style="background:#f0f2f5;border-radius:99px;height:8px"><div style="background:linear-gradient(90deg,var(--accent),var(--accent2));height:8px;border-radius:99px;width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('reportStatus').innerHTML = by('status', ['Novo','Em Contato','Proposta Enviada','Fechado','Perdido']);
+  document.getElementById('reportSource').innerHTML = by('origem', ['Brasil','Austrália','Manual']);
+  document.getElementById('reportService').innerHTML = by('servico', ['landing-page','site-profissional','sistema-cadastro','loja-virtual','manutencao','outro']);
+  const recent = leads.filter(l => new Date(l.data) > new Date(Date.now()-7*86400000));
+  document.getElementById('reportRecent').innerHTML = `<div style="font-size:2rem;font-weight:900;color:var(--accent2)">${recent.length}</div><div style="color:var(--gray);margin-top:6px">leads nos últimos 7 dias</div>`;
+}
+
+// ===== EXPORT =====
+function exportCSV() {
+  const leads = getLeads();
+  const headers = ['Nome','Empresa','Email','Telefone','Serviço','Origem','Status','Data','Notas'];
+  const rows = leads.map(l => [l.nome,l.empresa,l.email,l.telefone,l.servico,l.origem,l.status,fmtDate(l.data),l.notas||''].map(v => `"${(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'kdtech-leads-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  toast('CSV exportado!');
+}
+
+// ===== UTILS =====
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); }));
+
+// ===== INIT =====
+seedDemo();
+showView('leads');
+
+// Listen for new leads from form (cross-tab via storage event)
+window.addEventListener('storage', e => {
+  if (e.key === STORAGE_KEY) { renderStats(); renderTable(); }
+});
+</script>
+</body>
+</html>
