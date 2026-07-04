@@ -1,5 +1,25 @@
 /* ===== KDTech Agency - Main JS ===== */
 
+// Portfolio slider (Equilíbrio Natação)
+function goSlide(id, idx) {
+  const slider = document.getElementById(id);
+  if (!slider) return;
+  slider.querySelectorAll('.slide').forEach((s, i) => s.classList.toggle('active', i === idx));
+  slider.querySelectorAll('.sdot').forEach((d, i) => d.classList.toggle('active', i === idx));
+}
+// Auto-rotate sliders
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.pslider').forEach(slider => {
+    const slides = slider.querySelectorAll('.slide');
+    if (slides.length < 2) return;
+    let cur = 0;
+    setInterval(() => {
+      cur = (cur + 1) % slides.length;
+      goSlide(slider.id, cur);
+    }, 3000);
+  });
+});
+
 // Navbar scroll + hamburger
 const navbar = document.querySelector('.navbar');
 const hamburger = document.querySelector('.hamburger');
